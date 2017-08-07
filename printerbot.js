@@ -58,17 +58,17 @@ class PrinterBot extends Bot {
   }
 
   isMentioning_PrinterBot(message) {
-    return (message.hasOwnProperty('content'))&&(message.content.toLowerCase().indexOf(this.settings.name) > -1)
+    return (message.hasOwnProperty('content')) && (message.content.toLowerCase().indexOf(this.settings.name) > -1)
   }
 
 
-    onMessage(message) {
+  onMessage(message) {
 
-    console.log("incoming message",message);
-    console.log("chat",this.isChatMessage(message));
-    console.log("channel",this.isChannelConversation(message));
-    console.log("from me",this.isFromBot(message));
-    console.log("mentions me",this.isMentioning_PrinterBot(message));
+    //console.log("incoming message",message);
+    //console.log("chat",this.isChatMessage(message));
+    //console.log("channel",this.isChannelConversation(message));
+    //console.log("from me",this.isFromBot(message));
+    //console.log("mentions me",this.isMentioning_PrinterBot(message));
 
     if (this.isChatMessage(message) &&
       this.isChannelConversation(message) &&
@@ -84,9 +84,11 @@ class PrinterBot extends Bot {
 
     var channel = this.getChannelById(originalMessage.channel);
 
-    console.log("replying to ",originalMessage)
+    console.log("replying to ", originalMessage)
 
-    this.postMessageToChannel(channel.name, "test reply", {
+    var output = this.parse(originalMessage.content)
+
+    this.postMessageToChannel(channel.name, "Thanks @"+output.user+" I got the '"+output.command+"' for file:"+output.files[0], {
       as_user: true
     });
 
@@ -99,6 +101,81 @@ class PrinterBot extends Bot {
     })[0];
   };
 
+
+  findCommand(str) {
+    if (str.includes("list")) {
+      return "list"
+    } else if (str.includes("status")) {
+      return "status"
+    } else if (str.includes("add")) {
+      return "add"
+    } else {
+      return null
+    }
+  }
+
+  findFileName(str) {
+    var gcode_regex = /[^\\]*\.(\w+)$/;
+    var words = str.split(" ")
+
+    var files = []
+
+    words.forEach(function (word) {
+
+      //console.log(word.match(gcode_regex))
+      if (word.match(gcode_regex)) {
+        files.push(word)
+      }
+
+    })
+
+    return files;
+
+  }
+
+
+  parse(str) {
+    //example
+    //content: 'gwilymnewton: @3dprinterbot add dragon.gcode',
+
+    //break out user.
+    var index = str.indexOf(":") + 1
+    var message = str.substring(index);
+    var username = str.substring(0, index-1);
+
+    console.log("input", str);
+
+
+    //get rid of @ if present
+    str = str.replace("@", "");
+
+    if (message.includes("3dprinterbot")) {
+      index = str.indexOf("3dprinterbot") + 12
+      message = str.substring(index);
+    }
+
+    console.log("message", message)
+
+    var commmand = this.findCommand(message)
+    console.log("commmand", commmand)
+
+    var files = this.findFileName(message)
+    console.log("file", files)
+
+      return {
+        user: username,
+        command: commmand,
+        files: files
+      }
+
+
+
+
+  }
+
+
 }
+
+
 
 module.exports = PrinterBot;
