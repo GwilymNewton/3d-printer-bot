@@ -1,0 +1,12 @@
+{
+  "name": "3d-printer-slackbot",
+  "version": "0.0.0",
+  "description": "Slack bot for interacting with our 3D printer",
+  "main": "app.js",
+  "author": "gwilnew@uk.ibm.com",
+  "license": "ISC",
+  "dependencies": {
+    "slack-client": "^2.0.6",
+    "slackbots": "^1.0.2"
+  }
+}
