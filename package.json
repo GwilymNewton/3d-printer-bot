@@ -6,6 +6,7 @@
   "author": "gwilnew@uk.ibm.com",
   "license": "ISC",
   "dependencies": {
+    "cloudant": "^1.8.0",
     "slack-client": "^2.0.6",
     "slackbots": "^1.0.2"
   }
