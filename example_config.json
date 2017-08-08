@@ -1,3 +1,6 @@
 {
-    "slack_key" : "KEY"
+  "slack_key": "KEY",
+  "cloudant_username": "",
+  "cloudant_password": "",
+  "cloudant_db": ""
 }

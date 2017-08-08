@@ -1,4 +1,5 @@
 var Bot = require('slackbots');
+var CloudantQueue = require('./cloudant_queue.js');
 var util = require('util');
 
 class PrinterBot extends Bot {
@@ -7,6 +8,12 @@ class PrinterBot extends Bot {
     super(settings)
     this.settings = settings;
     this.settings.name = this.settings.name || '3dprinterbot';
+
+    this.cloud_queue = new CloudantQueue({
+      username: settings.cloudant_username,
+      password: settings.cloudant_password,
+      db: settings.cloudant_db
+    });
 
     this.getUser(this.settings.name).then(function (user) {
       this.user = user
@@ -88,9 +95,24 @@ class PrinterBot extends Bot {
 
     var output = this.parse(originalMessage.content)
 
-    this.postMessageToChannel(channel.name, "Thanks @"+output.user+" I got the '"+output.command+"' for file:"+output.files[0], {
-      as_user: true
-    });
+    switch (output.command) {
+    case "add":
+      console.log("adding file")
+      this.addToQueue(channel.name, output)
+      break;
+    case "print":
+      console.log("removing file")
+      this.printFromQueue(channel.name, output)
+      break;
+    case "list":
+      console.log("listing files")
+      this.listQueue(channel.name, output)
+      break;
+    default:
+      console.log("Command Not found")
+      this.helpMessage(channel.name, output)
+      break;
+    }
 
   }
 
@@ -105,8 +127,8 @@ class PrinterBot extends Bot {
   findCommand(str) {
     if (str.includes("list")) {
       return "list"
-    } else if (str.includes("status")) {
-      return "status"
+    } else if (str.includes("print")) {
+      return "print"
     } else if (str.includes("add")) {
       return "add"
     } else {
@@ -141,7 +163,7 @@ class PrinterBot extends Bot {
     //break out user.
     var index = str.indexOf(":") + 1
     var message = str.substring(index);
-    var username = str.substring(0, index-1);
+    var username = str.substring(0, index - 1);
 
     console.log("input", str);
 
@@ -162,16 +184,89 @@ class PrinterBot extends Bot {
     var files = this.findFileName(message)
     console.log("file", files)
 
-      return {
-        user: username,
-        command: commmand,
-        files: files
-      }
+    return {
+      user: username,
+      command: commmand,
+      files: files
+    }
 
 
 
 
   }
+
+  addToQueue(channelname, output) {
+
+    var self = this;
+
+    //TODO asset we have this data!
+    this.cloud_queue.push({
+      user: output.user,
+      file: output.files[0]
+    }, function (pushed) {
+
+      self.postMessageToChannel(channelname, "Thanks @" + output.user + " I added the file:```" + output.files[0] + "``` the print queue", {
+        as_user: true
+      });
+
+
+    })
+
+
+
+  }
+
+  printFromQueue(channelname, output) {
+
+    var self = this;
+
+    //TODO asset we have this data!
+    this.cloud_queue.pop(function (popped) {
+
+      console.log(popped)
+
+      self.postMessageToChannel(channelname, "Thanks @" + output.user + " The file:```" + popped.file + "```Belonging to @" + popped.user + " was removed from the queue and sent to the printer", {
+        as_user: true
+      });
+
+
+    })
+
+
+
+  }
+
+  listQueue(channelname, output) {
+
+    var self = this;
+
+    //TODO asset we have this data!
+    this.cloud_queue.list(function (list) {
+
+      console.log(list)
+
+      var output_list = "```\n"
+
+      for (var i = 0; i <= Math.min(list.length, 9); i++) {
+        output_list += list[0].user + " : " + list[0].file + "\n"
+      }
+      output_list += "```"
+
+
+      self.postMessageToChannel(channelname, output_list, {
+        as_user: true
+      });
+
+
+    })
+  }
+
+
+  helpMessage() {
+
+
+  }
+
 
 
 }
