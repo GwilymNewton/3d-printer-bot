@@ -247,8 +247,8 @@ class PrinterBot extends Bot {
 
       var output_list = "```\n"
 
-      for (var i = 0; i <= Math.min(list.length, 9); i++) {
-        output_list += list[0].user + " : " + list[0].file + "\n"
+      for (var i = 0; i < Math.min(list.length, 9); i++) {
+        output_list += list[i].user + " : " + list[i].file + "\n"
       }
       output_list += "```"
 
